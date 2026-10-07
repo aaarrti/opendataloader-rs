@@ -75,6 +75,11 @@ project documentation.
 - Prefer Zsh built-ins over Bash compatibility constructs; use `zargs` instead
   of `xargs`.
 
+### Platform support
+
+- Target Linux only. Do not add or maintain Windows or macOS support unless a
+  task explicitly requests it.
+
 ### CFR decompiler
 
 - Run `just download-cfr` to download the pinned CFR release into

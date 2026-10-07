@@ -658,3 +658,75 @@ finished modules.
   their MCIDs differ. Added same-line grouping in `semantics.rs` and a
   colocated regression test; the ten-fixture gate remains active for further
   structural mismatches.
+
+- [ ] **STD3-F7 — Resolve inherited page `MediaBox` values.** **Depends on:**
+  STD3 and P1. **Parallel:** no. The Rust benchmark fails while converting
+  `data/stg/1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.pdf` with `missing required
+  dictionary key "MediaBox"`. Inspect the PDF page tree and resolve a page's
+  `MediaBox` from its ancestors when the page dictionary does not define one.
+  Preserve an explicit page value when present, and report a clear parse error
+  only when no valid inherited value exists. Copy this PDF into the committed
+  regression-fixture area and generate its expected JSON and Markdown using the
+  original implementation; record the source and generation details in the
+  fixture manifest. **Acceptance:** the fixture and both oracle outputs are
+  committed; a colocated parser regression test covers inherited `MediaBox`
+  lookup; conversion matches the expected JSON structure and exact Markdown
+  bytes; and a Rust batch conversion with `parallel=true` including this PDF
+  completes without the reported error.
+
+
+---
+
+Next iteration goal - support all args 
+
+
+```python
+def convert(
+    input_path: Union[str, List[str]],
+    output_dir: Optional[str] = None,
+    format: Optional[Union[str, List[str]]] = None,
+    sanitize: bool = False,
+    keep_line_breaks: bool = False,
+    replace_invalid_chars: Optional[str] = None,
+    use_struct_tree: bool = False,
+    table_method: Optional[str] = None,
+    reading_order: Optional[str] = None,
+    markdown_page_separator: Optional[str] = None,
+    markdown_with_html: bool = False,
+    image_output: Optional[str] = None,
+    image_format: Optional[str] = None,
+    image_dir: Optional[str] = None,
+    pages: list[int] | None = None,
+    include_header_footer: bool = False,
+    detect_strikethrough: bool = False,
+    image_resolution: int | None = None,
+    space_ratio: Optional[str] = None,
+) -> None: ...
+    """
+    Convert PDF(s) into the requested output format(s).
+
+    Args:
+        input_path: One or more input PDF file paths or directories
+        output_dir: Directory where output files are written. Default: input file directory
+        format: Output formats (comma-separated). Values: json, text, html, pdf, markdown, tagged-pdf. Default: json. For HTML inside Markdown use --markdown-with-html. For image extraction control use --image-output.
+        quiet: Suppress console logging output
+        sanitize: Enable sensitive data sanitization. Replaces emails, phone numbers, IPs, credit cards, and URLs with placeholders
+        keep_line_breaks: Preserve original line breaks in extracted text
+        replace_invalid_chars: Replacement character for invalid/unrecognized characters. Default: space
+        use_struct_tree: Use PDF structure tree (tagged PDF) for reading order and semantic structure. Output quality depends on tag quality. Takes precedence over --hybrid: when both are set on a tagged PDF, the structure tree is used and the hybrid backend is not called
+        table_method: Table detection method. Values: default (border-based), cluster (border + cluster). Default: default
+        reading_order: Reading order algorithm. Values: off, xycut. Default: xycut
+        markdown_page_separator: Separator between pages in Markdown output. Use %page-number% for page numbers. Default: none
+        markdown_with_html: Allow HTML tags inside Markdown output for complex structures such as multi-row-span tables. Implies --format markdown.
+        image_output: Image output mode. Values: off (no images), embedded (Base64 data URIs), external (file references). Default: external
+        image_format: Output format for extracted images. Values: png, jpeg. Default: png
+        image_dir: Directory for extracted images (applies only with --image-output external)
+        pages: Pages to extract (e.g., "1,3,5-7"). Default: all pages (only supported for 1 PDF input)
+        include_header_footer: Include page headers and footers in output
+        detect_strikethrough: Detect strikethrough text and wrap with ~~ in Markdown output or <del></del> tag in HTML output (experimental)
+        image_resolution: Set the rendering resolution for images in DPI. Higher values improve image quality but increase memory consumption; lower values reduce memory usage at the cost of detail. Accepts positive decimal DPI values (e.g., 144.0). Default: 144.0.
+        space_ratio: Set the ratio used to calculate the automatic space-insertion threshold (threshold = space-ratio * font size). If the horizontal gap between two adjacent symbols exceeds this threshold, an extra space is inserted to text value. Accepts decimals (e.g., 0.17). Default: 0.17
+    """
+```
+
+Use original opendataloder_pdf to generate test fixtures for tests.

@@ -71,7 +71,7 @@ def convert(
     input_path: str | Path | list[str | Path],
     output_dir: str | Path,
     format: set[_OutputFormat] | list[_OutputFormat] | _OutputFormat | None = None,
-    parallel: bool = False,
+    parallel: bool = True,
     image_output_enabled: bool = False,
 ) -> None:
     """Convert local PDF files to JSON or Markdown, with optional image files.
@@ -84,7 +84,7 @@ def convert(
         format: Output formats to write: ``"json"``, ``"markdown"``, or
             both. Defaults to JSON.
         parallel: Process multiple PDF files concurrently. Defaults to
-            ``False``; a single PDF is processed serially.
+            ``True``; a single PDF is processed serially.
         image_output_enabled: Write extracted images to files. Defaults to
             ``False``.
 
@@ -108,7 +108,7 @@ def convert(
             raise FileNotFoundError(path)
 
     if format is None:
-        formats = {"json"}
+        formats = {"json", "markdown"}
     elif isinstance(format, str):
         formats = {format}
     else:
