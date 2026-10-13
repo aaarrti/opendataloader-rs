@@ -89,3 +89,11 @@ verification/verification-report-ci.txt
 # binaries; regeneration is rare and the generator needs pikepdf/reportlab)
 scripts/generate-test-fixtures.py
 
+
+
+# Added by cargo
+
+/target
+.codebase-memory/
+vendor
+data

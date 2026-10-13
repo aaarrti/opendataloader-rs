@@ -1,0 +1,26 @@
+[project]
+name = "opendataloader-mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [{ name = "aaarrti", email = "artem.sereda.tub@gmail.com" }]
+requires-python = ">=3.14"
+dependencies = ["mcp[cli]>=2.3.0", "opendataloader==0.0.1.dev1"]
+
+[project.scripts]
+opendataloder-mcp = "opendataloder_mcp:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.black]
+line-length = 100
+
+[tool.uv.sources]
+opendataloader = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "black>=26.10.0",
+]

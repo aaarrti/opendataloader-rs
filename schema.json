@@ -1,188 +1,202 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/opendataloader-project/opendataloader-pdf/main/schema.json",
   "title": "OpenDataLoader PDF Output",
-  "description": "JSON output schema for OpenDataLoader PDF conversion",
+  "description": "JSON output produced by the Rust PDF converter.",
   "type": "object",
-  "required": ["file name", "number of pages", "author", "title", "creation date", "modification date", "kids"],
+  "required": [
+    "file name",
+    "number of pages",
+    "author",
+    "title",
+    "creation date",
+    "modification date",
+    "kids"
+  ],
   "properties": {
-    "file name": {
-      "type": "string",
-      "description": "Name of the processed PDF"
-    },
-    "number of pages": {
-      "type": "integer",
-      "description": "Total page count"
-    },
-    "author": {
-      "type": ["string", "null"],
-      "description": "PDF author metadata"
-    },
-    "title": {
-      "type": ["string", "null"],
-      "description": "PDF title metadata"
-    },
-    "creation date": {
-      "type": ["string", "null"],
-      "description": "PDF creation timestamp"
-    },
-    "modification date": {
-      "type": ["string", "null"],
-      "description": "PDF modification timestamp"
-    },
+    "file name": { "type": "string" },
+    "number of pages": { "type": "integer", "minimum": 0 },
+    "author": { "type": ["string", "null"] },
+    "title": { "type": ["string", "null"] },
+    "creation date": { "type": ["string", "null"] },
+    "modification date": { "type": ["string", "null"] },
     "kids": {
       "type": "array",
-      "description": "Top-level content elements (per page)",
-      "items": {
-        "$ref": "#/$defs/contentElement"
-      }
+      "items": { "$ref": "#/$defs/element" }
     }
   },
   "$defs": {
     "boundingBox": {
       "type": "array",
-      "description": "Bounding box coordinates [left, bottom, right, top]",
-      "items": {
-        "type": "number"
-      },
+      "items": { "type": "number" },
       "minItems": 4,
       "maxItems": 4
     },
-    "baseElement": {
+    "commonElement": {
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string",
-          "description": "Element type"
-        },
-        "id": {
-          "type": "integer",
-          "description": "Unique content identifier"
-        },
-        "level": {
-          "type": "string",
-          "description": "Heading or structural level"
-        },
-        "page number": {
-          "type": "integer",
-          "description": "Page containing the element (1-indexed)"
-        },
-        "bounding box": {
-          "$ref": "#/$defs/boundingBox"
-        }
+        "type": { "type": "string" },
+        "pdfua_tag": { "type": "string" },
+        "id": { "type": "integer", "minimum": 1 },
+        "page number": { "type": "integer", "minimum": 1 },
+        "bounding box": { "$ref": "#/$defs/boundingBox" }
       },
       "required": ["type", "page number", "bounding box"]
     },
-    "textProperties": {
+    "textFields": {
       "type": "object",
       "properties": {
-        "font": {
-          "type": "string",
-          "description": "Font name"
-        },
-        "font size": {
-          "type": "number",
-          "description": "Font size"
-        },
+        "font": { "type": ["string", "null"] },
+        "font size": { "type": ["number", "null"] },
         "text color": {
-          "type": "string",
-          "description": "RGB color as string array"
+          "type": "array",
+          "items": { "type": "number" }
         },
-        "content": {
-          "type": "string",
-          "description": "Raw text value"
-        },
-        "hidden text": {
-          "type": "boolean",
-          "description": "Whether this is hidden text (e.g., OCR layer)"
-        }
+        "content": { "type": "string" }
       },
-      "required": ["font", "font size", "text color", "content"]
+      "required": ["font", "font size", "content"]
     },
-    "contentElement": {
+    "element": {
       "oneOf": [
-        { "$ref": "#/$defs/paragraph" },
         { "$ref": "#/$defs/heading" },
-        { "$ref": "#/$defs/caption" },
-        { "$ref": "#/$defs/table" },
+        { "$ref": "#/$defs/paragraph" },
+        { "$ref": "#/$defs/textChunk" },
         { "$ref": "#/$defs/textBlock" },
-        { "$ref": "#/$defs/list" },
+        { "$ref": "#/$defs/formula" },
         { "$ref": "#/$defs/image" },
-        { "$ref": "#/$defs/headerFooter" }
-      ]
-    },
-    "paragraph": {
-      "allOf": [
-        { "$ref": "#/$defs/baseElement" },
-        { "$ref": "#/$defs/textProperties" },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "paragraph" }
-          }
-        }
+        { "$ref": "#/$defs/caption" },
+        { "$ref": "#/$defs/list" },
+        { "$ref": "#/$defs/listItem" },
+        { "$ref": "#/$defs/table" },
+        { "$ref": "#/$defs/tableRow" },
+        { "$ref": "#/$defs/tableCell" },
+        { "$ref": "#/$defs/toc" },
+        { "$ref": "#/$defs/tocItem" }
       ]
     },
     "heading": {
       "allOf": [
-        { "$ref": "#/$defs/baseElement" },
-        { "$ref": "#/$defs/textProperties" },
+        { "$ref": "#/$defs/commonElement" },
+        { "$ref": "#/$defs/textFields" },
         {
           "type": "object",
           "properties": {
             "type": { "const": "heading" },
-            "heading level": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Heading level (e.g., 1 for h1)"
-            }
+            "heading level": { "type": "integer", "minimum": 1 }
           },
           "required": ["heading level"]
         }
       ]
     },
+    "paragraph": {
+      "allOf": [
+        { "$ref": "#/$defs/commonElement" },
+        { "$ref": "#/$defs/textFields" },
+        { "properties": { "type": { "const": "paragraph" } } }
+      ]
+    },
+    "textChunk": {
+      "allOf": [
+        { "$ref": "#/$defs/commonElement" },
+        { "$ref": "#/$defs/textFields" },
+        { "properties": { "type": { "const": "text chunk" } } }
+      ]
+    },
+    "textBlock": {
+      "allOf": [
+        { "$ref": "#/$defs/commonElement" },
+        { "$ref": "#/$defs/textFields" },
+        { "properties": { "type": { "const": "text block" } } }
+      ]
+    },
+    "formula": {
+      "allOf": [
+        { "$ref": "#/$defs/commonElement" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "formula" },
+            "content": { "type": "string" }
+          },
+          "required": ["content"]
+        }
+      ]
+    },
+    "image": {
+      "allOf": [
+        { "$ref": "#/$defs/commonElement" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "image" },
+            "alt_source": { "const": "missing" },
+            "source": { "type": "string" },
+            "data": { "type": "string" },
+            "format": { "enum": ["png", "jpeg"] }
+          },
+          "required": ["alt_source"]
+        }
+      ]
+    },
     "caption": {
       "allOf": [
-        { "$ref": "#/$defs/baseElement" },
-        { "$ref": "#/$defs/textProperties" },
+        { "$ref": "#/$defs/commonElement" },
+        { "$ref": "#/$defs/textFields" },
         {
           "type": "object",
           "properties": {
             "type": { "const": "caption" },
-            "linked content id": {
-              "type": "integer",
-              "description": "ID of the linked content element (table, image, etc.)"
-            }
+            "linked content id": { "type": "integer", "minimum": 1 }
           }
+        }
+      ]
+    },
+    "list": {
+      "allOf": [
+        { "$ref": "#/$defs/commonElement" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "list" },
+            "numbering style": { "enum": ["ordered", "unordered"] },
+            "number of list items": { "type": "integer", "minimum": 0 },
+            "list items": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/listItem" }
+            }
+          },
+          "required": ["numbering style", "number of list items", "list items"]
+        }
+      ]
+    },
+    "listItem": {
+      "allOf": [
+        { "$ref": "#/$defs/commonElement" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "list item" },
+            "content": { "type": "string" },
+            "kids": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/element" }
+            }
+          },
+          "required": ["kids"]
         }
       ]
     },
     "table": {
       "allOf": [
-        { "$ref": "#/$defs/baseElement" },
+        { "$ref": "#/$defs/commonElement" },
         {
           "type": "object",
           "properties": {
             "type": { "const": "table" },
-            "number of rows": {
-              "type": "integer",
-              "description": "Row count"
-            },
-            "number of columns": {
-              "type": "integer",
-              "description": "Column count"
-            },
-            "previous table id": {
-              "type": "integer",
-              "description": "Linked table identifier (if broken across pages)"
-            },
-            "next table id": {
-              "type": "integer",
-              "description": "Linked table identifier"
-            },
+            "number of rows": { "type": "integer", "minimum": 0 },
+            "number of columns": { "type": "integer", "minimum": 0 },
             "rows": {
               "type": "array",
-              "description": "Row objects",
               "items": { "$ref": "#/$defs/tableRow" }
             }
           },
@@ -194,13 +208,10 @@
       "type": "object",
       "properties": {
         "type": { "const": "table row" },
-        "row number": {
-          "type": "integer",
-          "description": "Row index (1-indexed)"
-        },
+        "id": { "type": "integer", "minimum": 1 },
+        "row number": { "type": "integer", "minimum": 1 },
         "cells": {
           "type": "array",
-          "description": "Cell objects",
           "items": { "$ref": "#/$defs/tableCell" }
         }
       },
@@ -208,145 +219,52 @@
     },
     "tableCell": {
       "allOf": [
-        { "$ref": "#/$defs/baseElement" },
+        { "$ref": "#/$defs/commonElement" },
         {
           "type": "object",
           "properties": {
             "type": { "const": "table cell" },
-            "row number": {
-              "type": "integer",
-              "description": "Row index of the cell (1-indexed)"
-            },
-            "column number": {
-              "type": "integer",
-              "description": "Column index of the cell (1-indexed)"
-            },
-            "row span": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Number of rows spanned"
-            },
-            "column span": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Number of columns spanned"
-            },
+            "row number": { "type": "integer", "minimum": 1 },
+            "column number": { "type": "integer", "minimum": 1 },
+            "row span": { "type": "integer", "minimum": 1 },
+            "column span": { "type": "integer", "minimum": 1 },
+            "is_header": { "const": true },
             "kids": {
               "type": "array",
-              "description": "Nested content elements",
-              "items": { "$ref": "#/$defs/contentElement" }
+              "items": { "$ref": "#/$defs/element" }
             }
           },
           "required": ["row number", "column number", "row span", "column span", "kids"]
         }
       ]
     },
-    "textBlock": {
+    "toc": {
       "allOf": [
-        { "$ref": "#/$defs/baseElement" },
+        { "$ref": "#/$defs/commonElement" },
         {
           "type": "object",
           "properties": {
-            "type": { "const": "text block" },
-            "kids": {
+            "type": { "const": "toc" },
+            "toc items": {
               "type": "array",
-              "description": "Text block children",
-              "items": { "$ref": "#/$defs/contentElement" }
+              "items": { "$ref": "#/$defs/tocItem" }
             }
           },
-          "required": ["kids"]
+          "required": ["toc items"]
         }
       ]
     },
-    "list": {
+    "tocItem": {
       "allOf": [
-        { "$ref": "#/$defs/baseElement" },
+        { "$ref": "#/$defs/commonElement" },
+        { "$ref": "#/$defs/textFields" },
         {
           "type": "object",
           "properties": {
-            "type": { "const": "list" },
-            "numbering style": {
-              "type": "string",
-              "description": "Marker style (ordered, bullet, etc.)"
-            },
-            "number of list items": {
-              "type": "integer",
-              "description": "Item count"
-            },
-            "previous list id": {
-              "type": "integer",
-              "description": "Linked list identifier"
-            },
-            "next list id": {
-              "type": "integer",
-              "description": "Linked list identifier"
-            },
-            "list items": {
-              "type": "array",
-              "description": "Item nodes",
-              "items": { "$ref": "#/$defs/listItem" }
-            }
-          },
-          "required": ["numbering style", "number of list items", "list items"]
-        }
-      ]
-    },
-    "listItem": {
-      "allOf": [
-        { "$ref": "#/$defs/baseElement" },
-        { "$ref": "#/$defs/textProperties" },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "list item" },
+            "type": { "const": "toc item" },
             "kids": {
               "type": "array",
-              "description": "Nested content elements",
-              "items": { "$ref": "#/$defs/contentElement" }
-            }
-          },
-          "required": ["kids"]
-        }
-      ]
-    },
-    "image": {
-      "allOf": [
-        { "$ref": "#/$defs/baseElement" },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "image" },
-            "source": {
-              "type": "string",
-              "description": "Relative path to the image file"
-            },
-            "data": {
-              "type": "string",
-              "description": "Base64 data URI (when embed-images is enabled)"
-            },
-            "format": {
-              "type": "string",
-              "description": "Image format (png, jpeg)",
-              "enum": ["png", "jpeg"]
-            }
-          }
-        }
-      ]
-    },
-    "headerFooter": {
-      "allOf": [
-        { "$ref": "#/$defs/baseElement" },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["header", "footer"]
-            },
-            "kids": {
-              "type": "array",
-              "description": "Content elements within the header or footer",
-              "items": { "$ref": "#/$defs/contentElement" }
+              "items": { "$ref": "#/$defs/element" }
             }
           },
           "required": ["kids"]

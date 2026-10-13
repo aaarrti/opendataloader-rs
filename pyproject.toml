@@ -1,0 +1,10 @@
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[dependency-groups]
+dev = ["dvc[gs]>=3.67.1", "pytest>=9.1.1", "ruff>=0.16.10", "agent_loops"]
+[tool.black]
+line-length = 100
+
+[tool.uv.sources]
+agent_loops = { git = "https://github.com/aaarrti/agent-loops.git" }

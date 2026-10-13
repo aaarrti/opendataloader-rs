@@ -1,0 +1,40 @@
+name: CI
+
+on: push
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Rust and Clippy
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Set up Python 3.14 and uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
+      - name: Install all locked Python workspace packages
+        run: uv sync --all-packages --all-groups --locked
+      - name: Authenticate to Google Cloud for DVC
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_JSON }}
+      - name: Pull test data with DVC
+        run: uv run dvc pull
+      - name: Run Rust tests
+        run: cargo test --workspace --locked
+      - name: Lint Rust with Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Lint Python with Ruff
+        run: uv run ruff check .
+      - name: Check Python formatting with Black
+        run: uv run black --check .
+      - name: Build the C library for Python tests
+        run: cargo build -p opendataloder_clib --locked
+      - name: Copy the C library into the Python package
+        run: cp target/debug/libopendataloder_clib.so packages/opendataloader/src/opendataloader/libodl.so
+      - name: Run Python tests
+        run: uv run pytest

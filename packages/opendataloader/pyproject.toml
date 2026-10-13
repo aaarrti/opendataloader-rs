@@ -1,0 +1,24 @@
+[project]
+name = "opendataloader"
+version = "0.0.1.dev1"
+description = "..."
+authors = [
+    { name = "aaarrti", email = "artem.sereda.tub@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "black>=26.5.1",
+]
+
+[tool.uv.build-backend]
+source-include = ["src/opendataloader/libodl.so"]
+
+[tool.black]
+line-length = 100
