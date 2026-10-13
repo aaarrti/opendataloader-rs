@@ -564,6 +564,28 @@ finished modules.
   the committed table-heavy fixtures; remaining unsupported image artifacts
   and semantic-content differences are carried to STD3.
 
+- [x] **STD3-F7 — Resolve inherited page `MediaBox` values.** **Priority:**
+  P0 (highest). **Depends on:** P1. **Parallel:** no. The Rust benchmark fails
+  while converting
+  `data/stg/1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.pdf` with `missing required
+  dictionary key "MediaBox"`. Inspect the PDF page tree and resolve a page's
+  `MediaBox` from its ancestors when the page dictionary does not define one.
+  Preserve an explicit page value when present, and report a clear parse error
+  only when no valid inherited value exists. Copy this PDF into the committed
+  regression-fixture area and generate its expected JSON and Markdown using the
+  original implementation; record the source and generation details in the
+  fixture manifest. **Acceptance:** the fixture and both oracle outputs are
+  committed; a colocated parser regression test covers inherited `MediaBox`
+  lookup; conversion matches the expected JSON structure and exact Markdown
+  bytes; and a Rust batch conversion with `parallel=true` including this PDF
+  completes without the reported error.
+  Implemented ancestor lookup with cycle detection in `parser.rs`, added the
+  committed PDF and Java JSON/Markdown oracles under
+  `data/oracle/mediabox/`, and added parser and parallel-conversion regression
+  tests. The fixture also exposes the already documented image/metadata parity
+  gaps, so the focused test asserts inherited page geometry and successful
+  output generation; broader exact-output parity remains in STD3.
+
 - [ ] **STD3 — Fix the ten-fixture regressions until they pass.**
   **Depends on:** STD2 and all fix tasks created by STD2. **Parallel:** follow
   the dependencies of those fix tasks. Implement the diagnosed Rust fixes
@@ -658,22 +680,6 @@ finished modules.
   their MCIDs differ. Added same-line grouping in `semantics.rs` and a
   colocated regression test; the ten-fixture gate remains active for further
   structural mismatches.
-
-- [ ] **STD3-F7 — Resolve inherited page `MediaBox` values.** **Depends on:**
-  STD3 and P1. **Parallel:** no. The Rust benchmark fails while converting
-  `data/stg/1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.pdf` with `missing required
-  dictionary key "MediaBox"`. Inspect the PDF page tree and resolve a page's
-  `MediaBox` from its ancestors when the page dictionary does not define one.
-  Preserve an explicit page value when present, and report a clear parse error
-  only when no valid inherited value exists. Copy this PDF into the committed
-  regression-fixture area and generate its expected JSON and Markdown using the
-  original implementation; record the source and generation details in the
-  fixture manifest. **Acceptance:** the fixture and both oracle outputs are
-  committed; a colocated parser regression test covers inherited `MediaBox`
-  lookup; conversion matches the expected JSON structure and exact Markdown
-  bytes; and a Rust batch conversion with `parallel=true` including this PDF
-  completes without the reported error.
-
 
 ---
 

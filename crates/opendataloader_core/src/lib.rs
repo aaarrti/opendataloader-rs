@@ -215,6 +215,46 @@ mod tests {
     }
 
     #[test]
+    fn inherited_media_box_converts_in_parallel_and_preserves_geometry() -> anyhow::Result<()> {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let fixture_dir = manifest_dir.join("../../data/oracle/mediabox");
+        let pdf_path = fixture_dir.join("1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.pdf");
+        let output_dir = manifest_dir.join("../../target/std3-f7");
+        fs::create_dir_all(&output_dir)?;
+        convert_with_options(
+            std::slice::from_ref(&pdf_path),
+            &output_dir,
+            ConversionOptions {
+                json_enabled: true,
+                markdown_enabled: true,
+                parallel: true,
+                ..ConversionOptions::default()
+            },
+        )?;
+        let actual = serde_json::from_slice::<serde_json::Value>(&fs::read(
+            output_dir.join("1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.json"),
+        )?)?;
+        assert_eq!(actual["number of pages"], 1);
+        assert!(output_dir.join("1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.md").is_file());
+        let expected = serde_json::from_slice::<serde_json::Value>(&fs::read(
+            fixture_dir.join("1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.json"),
+        )?)?;
+        let bounds = expected["kids"][0]["bounding box"]
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("expected Java image bounds"))?;
+        let document = parse_pdf(&pdf_path).map_err(|error| anyhow::anyhow!(error))?;
+        let expected_width = bounds[2]
+            .as_f64()
+            .ok_or_else(|| anyhow::anyhow!("expected numeric Java image width"))?;
+        let expected_height = bounds[3]
+            .as_f64()
+            .ok_or_else(|| anyhow::anyhow!("expected numeric Java image height"))?;
+        assert!((document.pages[0].width - expected_width).abs() < 1e-4);
+        assert!((document.pages[0].height - expected_height).abs() < 1e-4);
+        Ok(())
+    }
+
+    #[test]
     fn stg_regression_matches_selected_oracles() -> anyhow::Result<()> {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let output_dir = manifest_dir.join(format!("../../target/std1-{}", std::process::id()));

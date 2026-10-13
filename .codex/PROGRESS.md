@@ -286,3 +286,11 @@ now merge by shared PDF role despite differing MCIDs, while paragraph joins
 require compatible left alignment so indented runs remain separate. All seven
 semantic unit tests pass; the ten-fixture gate still reports the documented
 broader table, image, metadata, and tagged-structure mismatches.
+
+2026-10-13 — Completed STD3-F7. `page_bounds` now walks inherited `/Parent`
+page-tree dictionaries with cycle detection, preserving explicit page
+`MediaBox` values and returning a parse error when the chain has no valid box.
+Added the regression PDF and Java JSON/Markdown oracles under
+`data/oracle/mediabox/`, plus parser and `parallel=true` conversion tests.
+Focused tests pass; unrelated image/metadata parity gaps remain documented
+under STD3.

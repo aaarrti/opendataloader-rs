@@ -1,4 +1,8 @@
-use std::{collections::BTreeMap, fs, path::Path};
+use std::{
+    collections::{BTreeMap, HashSet},
+    fs,
+    path::Path,
+};
 
 use lopdf::{Dictionary, Document as PdfDocument, Object, content::Operation};
 
@@ -232,8 +236,21 @@ fn font_encoding<'a>(pdf: &'a PdfDocument, font: &'a Dictionary) -> Option<lopdf
 }
 
 fn page_bounds(pdf: &PdfDocument, page_id: lopdf::ObjectId) -> Result<(f64, f64), String> {
-    let page = pdf.get_dictionary(page_id).map_err(|error| error.to_string())?;
-    let box_object = page.get_deref(b"MediaBox", pdf).map_err(|error| error.to_string())?;
+    let mut current_id = page_id;
+    let mut visited = HashSet::new();
+    let box_object = loop {
+        if !visited.insert(current_id) {
+            return Err("cyclic page-tree Parent chain".into());
+        }
+        let page = pdf.get_dictionary(current_id).map_err(|error| error.to_string())?;
+        if page.has(b"MediaBox") {
+            break page.get_deref(b"MediaBox", pdf).map_err(|error| error.to_string())?;
+        }
+        current_id = page
+            .get(b"Parent")
+            .and_then(Object::as_reference)
+            .map_err(|error| error.to_string())?;
+    };
     let values = box_object.as_array().map_err(|error| error.to_string())?;
     if values.len() != 4 {
         return Err("MediaBox must contain four numbers".into());
@@ -932,6 +949,27 @@ mod tests {
                 .flat_map(|page| page.chunks.iter())
                 .any(|chunk| matches!(chunk, ParserChunk::Text(_)))
         );
+        Ok(())
+    }
+
+    #[test]
+    fn parser_resolves_inherited_media_box() -> anyhow::Result<()> {
+        let path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../data/stg/1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.pdf");
+        let pdf = PdfDocument::load(&path)?;
+        let page_id = pdf
+            .get_pages()
+            .values()
+            .next()
+            .copied()
+            .ok_or_else(|| anyhow::anyhow!("expected a page"))?;
+        assert!(pdf.get_dictionary(page_id)?.get(b"MediaBox").is_err());
+        let (width, height) = page_bounds(&pdf, page_id).map_err(|error| anyhow::anyhow!(error))?;
+        assert!(width > 0.0);
+        assert!(height > 0.0);
+        let document = crate::parse_pdf(&path).map_err(|error| anyhow::anyhow!(error))?;
+        assert_eq!(document.pages[0].width, width);
+        assert_eq!(document.pages[0].height, height);
         Ok(())
     }
 

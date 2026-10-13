@@ -1,0 +1,17 @@
+{
+  "file name" : "1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs.pdf",
+  "number of pages" : 1,
+  "author" : null,
+  "title" : null,
+  "creation date" : "D:20210109164618Z00'00'",
+  "modification date" : "D:20210109164618Z00'00'",
+  "kids" : [ {
+    "type" : "image",
+    "pdfua_tag" : "Figure",
+    "id" : 1,
+    "page number" : 1,
+    "bounding box" : [ 0.0, 0.0, 544.32, 816.48 ],
+    "alt_source" : "missing",
+    "source" : "1XHKM6rWJGznIJctL_7QzImRi1qOHDkGs_images/imageFile1.png"
+  } ]
+}
